@@ -1,0 +1,158 @@
+{% load static %}
+<html>
+	<head>
+		<title>
+
+		</title>
+		<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+		<link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
+		<link href="{% static 'css/brands.min.css' %}" rel="stylesheet">
+		<link href="{% static 'css/solid.min.css' %}" rel="stylesheet">	
+		<style type="text/css">
+			td input[type="button"]{
+				height: 10%;
+				width: 10%;
+			}
+			tbody td:nth-last-child(1){
+				position:absolute;
+				right:22%;
+				border-width: 0;
+				height: 25%;
+			}
+		</style>
+	</head>
+	<body style="background: url('/static/images/blue.jpg');" class="w-100 h-100">
+		{% block javascript %}
+		<script>
+			function add_row(){
+				var number_of_current_rows=$('tr').length-1;
+				number_of_current_rows++;
+				$("i[onclick='add_row();']").parents("td").css('display','none');
+				var row="<tr>"+
+							"<input type='hidden'>"+
+							"<th class='text-center w-auto' scope='row'>"+number_of_current_rows+"</th>"+
+							"<td class='w-auto'><input type='text' class='w-100 firstName' required/></td>"+
+							"<td class='w-auto'><input type='text' class='w-100 lastName' required/></td>"+
+							"<td class='w-auto'><input type='number' class='w-100 age' required/></td>"+
+							"<td class='w-auto text-center' style='position:absolute;right:22%;border-width: 0;'>"+
+								"<span class='p-0 btn btn-outline-success border-0' style='font-size: 2em;'>"+
+									"<img src='/static/images/plus-solid (1).svg' onclick='add_row();'>"+
+								"</span>"+
+							"</td>"+
+							"<td class='w-auto text-center' style='position:absolute;right:19%;border-width: 0;'>"+
+								"<span class='p-0 btn btn-outline-danger border-0' style='font-size: 2em;'>"+
+									"<img src='/static/images/window-close-solid.svg' onclick='remove_row(this);'>"+
+								"</span>"+
+							"</td>"+
+							"<td class='w-auto text-center' style='position:absolute;right:16%;border-width: 0;'>"+
+								"<span class='p-0 btn btn-outline-primary border-0' style='font-size: 2em;'>"+
+									"<img src='/static/images/check-circle-solid.svg' alt='' onclick='save_row(this);'>"+
+								"</span>"+
+							"</td>"+
+						"</tr>";
+				$('tbody').append(row);
+			}
+			function remove_row(element){
+				var pk=$(element).parents("tr").children("input[type='hidden']").val();
+				var plus_icon="<td class='w-auto text-center' style='position:absolute;right:22%;border-width: 0;'>"+
+								"<span class='p-0 btn btn-outline-success border-0' style='font-size: 2em;'>"+
+									"<i class='fas fa-plus' onclick='add_row();'></i>"+
+								"</span>"+
+							"</td>";
+				if(pk){
+					//do async request
+					var url='/delete_person/pk='+pk;
+					$.ajax({
+						url:url,
+						method:"GET",
+						success:function(){
+							//else it is new row 
+							$(element).parents("tr").remove();
+							$("tbody tr:last-child").append(plus_icon);
+						}
+					});
+				}
+			}
+			function save_row(element){
+				var first_name=$(element).parents("tr").find(".firstName").val();
+				var age=$(element).parents("tr").find(".age").val();
+				var last_name=$(element).parents("tr").find(".lastName").val();
+				console.log(first_name);
+				console.log(age);
+				console.log(last_name);
+				//do async request
+				$.ajax({
+						url:'/add_person/',
+						data:"{'firstName':'"+first_name+"','lastName':'"+last_name+"','age':'"+age+"'}",
+						method:"GET",
+						success:function(){
+							$(element).parents("tr").find(".firstName").remove();
+							$(element).parents("tr").find(".age").remove();
+							$(element).parents("tr").find(".lastName").remove();
+							//also the hiddden field witk pk after persisting
+							$(element).parents("tr").children('td:nth-child(3)').addClass('text-center').text(first_name);
+							$(element).parents("tr").children('td:nth-child(4)').addClass('text-center').text(last_name);
+							$(element).parents("tr").children('td:nth-child(5)').addClass('text-center').text(age);
+							$(element).parents("td").remove();
+						}
+					});
+			}
+		</script>
+		{% endblock %}
+		<div id="parent" class="text-align">
+			<table class="table w-50 mx-auto table-dark mr-n5 p-0">
+			  <thead>
+			    <tr>
+			      <input type="hidden">
+			      <th class="text-center  w-auto" scope="col">#</th>
+			      <th class="text-center  w-auto" scope="col">First name</th>
+			      <th class="text-center" scope="col">Last name</th>
+			      <th class="text-center" scope="col">Age</th>
+			      <th></th>
+			    </tr>
+			  </thead>
+				<tbody>
+					<tr>
+						<th class="text-center w-auto" scope="row">-1</th>
+						<td class="text-center w-auto">Mark</td>
+						<td class="text-center w-auto">Otto</td>
+						<td class="w-auto text-center">25</td>
+						<td class="w-0">
+						</td>
+						<td class="w-auto text-center">
+							<span class="p-0 btn btn-outline-success border-0" style="font-size: 2em;">
+								<img src='/static/images/plus-solid (1).svg' onclick='add_row();'>
+							</span>
+						</td>
+					</tr>
+					{% if persons %}
+						{% for person,id in persons.items %}
+							<tr>
+								<input type='hidden' value='{{person.id}}'>
+								<th class="text-center w-auto" scope="row">{{id}}</th>
+								<td class="text-center w-auto">{{person.firstName}}</td>
+								<td class="text-center w-auto">{{person.lastName}}</td>
+								<td class="w-auto text-center">{{person.age}}</td>
+								<td class="w-auto text-center">
+									<span class="p-0 btn btn-outline-success border-0" style="font-size: 2em;">
+										<img src='/static/images/plus-solid (1).svg' onclick='add_row();'>
+									</span>
+								</td>
+								<td class="w-auto text-center" style='position:absolute;right:19%;border-width: 0;'>
+									<span class="p-0 btn btn-outline-danger border-0" style="font-size: 2em;">
+										<img src='/static/images/window-close-solid.svg' onclick='remove_row(this);'>
+									</span>
+								</td>
+							</tr>
+						{%end for%}
+					{% endif%}
+				</tbody>
+			</table>
+		</div>
+		<script src="{% static 'js/jquery-3.3.1.js' %}"></script>
+	    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+	    <script>
+
+	    </script>
+	</body>
+</html>
